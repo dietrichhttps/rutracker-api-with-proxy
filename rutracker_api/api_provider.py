@@ -13,7 +13,11 @@ class ApiProvider(object):
         self.session = session
 
     def _request(self, endpoint: str, params: dict) -> dict:
-        response = self.session.get(Url.API.value + endpoint, params=params)
+        # Заголовки, чтобы имитировать браузер
+        headers = {
+            'User-Agent': Url.USER_AGENT.value
+        }
+        response = self.session.get(Url.API.value + endpoint, params=params, headers=headers)
         json = response.json()
         if "error" in json:
             raise ServerException(json["error"]["text"])
