@@ -12,6 +12,7 @@ class Url(Enum):
     # OTHER
     MAGNET_ANN = "http://bt2.t-ru.org/ann?magnet"
     API = "http://api.rutracker.org/v1/"
+    USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
     # More about API: http://api.rutracker.org/v1/docs/
 
 
