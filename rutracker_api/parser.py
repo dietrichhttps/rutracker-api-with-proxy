@@ -38,7 +38,7 @@ class Parser(object):
             size = int(info[4]["data-ts_text"])
             seeds = int(info[5].find("b").text)
             leeches = int(info[6].text)
-            downloads = int(info[7].text)
+            downloads = int(info[7].text.replace(',', ''))
             registered = int(info[8]["data-ts_text"])
 
             t = Torrent(
