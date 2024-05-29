@@ -1,32 +1,36 @@
+import requests
 from .parser import Parser
 from .page_provider import PageProvider
 from .api_provider import ApiProvider
-from requests import Session
-from typing import Union, Optional
+from typing import Union
 from .enums import Sort, Order
 from .torrent import Torrent
 
 
 class RutrackerApi(object):
-    def __init__(self, session: Optional[Session] = None):
-        if not session:
-            session = Session()
-        self.parser = Parser()
-        self.page_provider = PageProvider(session)
-        self.api = ApiProvider(session)
+    def __init__(self, proxy: str):
+        self.session = requests.Session()
+        self.session.proxies = {
+                'http': proxy,
+                'https': proxy,
+            }
 
-    def login(self, username: str, password: str) -> None:
+        self.parser = Parser()
+        self.page_provider = PageProvider(self.session)
+        self.api = ApiProvider(self.session)
+
+    def login(self, username: str, password: str, proxy: str = None) -> None:
         """Login Rutracker.org"""
 
-        self.page_provider.login(username, password)
+        self.page_provider.login(username, password, proxy)
 
     def search(
         self,
         query: str,
         sort: Union[Sort, str] = "desc",
-        order: Union[Order, str] = "registered",
+        order: Union[Order, str] = "seeds",
         page: int = 1,
-        get_hash: bool = True,
+        get_hash: bool = False,
     ) -> dict:
         """Search for torrents. Returns a dictionary with the keys 'count', 'page', 'total_pages' and 'result'"""
 
