@@ -3,61 +3,77 @@ from .exceptions import (
     AuthorizationException,
     NotAuthorizedException,
     RedirectException,
+    ServerException,
 )
-import json
+from requests import Session
 
 
 class PageProvider:
-    def __init__(self, session):
+    """This class provides access to the Rutracker forum"""
+    def __init__(self, session: Session):
         self.session = session
         self.authorized = False
-        self.cookie = None
+        self.base_url = 'https://rutracker.org/forum/'
 
-    def login(self, username, password):
-        body = {"login_username": username, "login_password": password, "login": "Вход"}
-        response = self.session.post(
-            Url.LOGIN_URL.value,
-            data=body,
-            allow_redirects=False,
-        )
-        if response.status_code == 307:
-            raise RedirectException(response.headers["Location"])
-        if response.status_code != 302:
-            raise AuthorizationException
+    def login(self, username, password, proxy: str | None = None):
+        login_url = f"{self.base_url}login.php"
 
-        self.cookie = response.headers["set-cookie"]
+        # Заголовки, чтобы имитировать браузер
+        headers = {
+            'User-Agent': Url.USER_AGENT.value
+        }
+
+        # Параметры логина
+        payload = {
+            'login_username': username,
+            'login_password': password,
+            'login': 'Вход'
+        }
+
+        # Отправка POST-запроса для логина
+        response = self.session.post(login_url, data=payload, headers=headers)
+        if 'profile.php?mode=register' in response.url:
+            raise AuthorizationException('Ошибка авторизации. Проверьте логин и пароль.')
+
         self.authorized = True
 
     def search(self, query, sort, order, page):
         if not self.authorized:
             raise NotAuthorizedException
 
-        if page < 1:
-            page = 1
+        search_url = f"{self.base_url}tracker.php"
 
-        params = {"nm": query, "start": (page - 1) * 50}
-        body = {
-            "s": sort,
-            "o": order,
+        # Заголовки, чтобы имитировать браузер
+        headers = {
+            'User-Agent': Url.USER_AGENT.value
         }
-        headers = {"Cookie": self.cookie}
-        response = self.session.post(
-            Url.SEARCH_URL.value,
-            params=params,
-            data=body,
-            headers=headers,
-        )
-        return response.content
+
+        params = {
+            'nm': query,
+            's': sort,
+            'o': order,
+            'start': (page - 1) * 50
+        }
+
+        response = self.session.get(search_url, params=params, headers=headers)
+        if response.status_code != 200:
+            raise ServerException(f"Ошибка выполнения поиска: {response.status_code}")
+
+        return response.text
 
     def torrent_file(self, topic_id):
         if not self.authorized:
             raise NotAuthorizedException
 
-        params = {"t": topic_id}
-        headers = {"Cookie": self.cookie}
-        response = self.session.get(
-            Url.DOWNLOAD_URL.value,
-            params=params,
-            headers=headers,
-        )
+        download_url = f"{Url.DOWNLOAD_URL.value}?t={topic_id}"
+
+        # Заголовки, чтобы имитировать браузер
+        headers = {
+            'User-Agent': Url.USER_AGENT.value
+        }
+
+        response = self.session.get(download_url, headers=headers)
+        if response.status_code != 200:
+            raise ServerException(f"Ошибка загрузки торрент-файла: {response.status_code}")
+
         return response.content
