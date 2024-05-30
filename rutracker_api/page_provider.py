@@ -1,3 +1,4 @@
+from .utils import is_autorized
 from .enums import Url
 from .exceptions import (
     AuthorizationException,
@@ -32,8 +33,9 @@ class PageProvider:
 
         # Отправка POST-запроса для логина
         response = self.session.post(login_url, data=payload, headers=headers)
-        if 'profile.php?mode=register' in response.url:
-            raise AuthorizationException('Ошибка авторизации. Проверьте логин и пароль.')
+
+        # Проверка успешной авторизации
+        is_autorized(response, username)
 
         self.authorized = True
 
