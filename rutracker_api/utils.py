@@ -1,5 +1,10 @@
 import urllib.parse
 
+from bs4 import BeautifulSoup
+from requests import Response
+
+from rutracker_api.exceptions import AuthorizationException
+
 
 def format_size(size_in_bytes):
     size_in_kilobytes = size_in_bytes / (1024)
@@ -24,3 +29,14 @@ def generate_magnet(hash, tracker=None, title=None, url=None):
     if url:
         params["as"] = url
     return "magnet:?" + urllib.parse.urlencode(params)
+
+
+def is_autorized(response: Response, username: str) -> bool:
+    soup = BeautifulSoup(response.text, 'html.parser')
+    logged_in_username = soup.find('a', {'id': 'logged-in-username'})
+
+    if 'profile.php?mode=register' in response.url:
+        raise AuthorizationException('Ошибка авторизации. Проверьте логин и пароль.')
+    if not logged_in_username or logged_in_username.text != username:
+        raise AuthorizationException('Ошибка авторизации. Признаки успешного входа не найдены.')
+    return True
