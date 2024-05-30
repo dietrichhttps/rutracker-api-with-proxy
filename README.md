@@ -11,7 +11,8 @@ cp -r rutracker_api *your project folder*
 ## Usage
 ```python
 >>> from rutracker_api import RutrackerApi
->>> api = RutrackerApi()
+>>> proxy = 'your_proxy'
+>>> api = RutrackerApi(proxy=proxy)
 >>> api.login("username", "password")
 >>> search = api.search("ubuntu mate")
 >>> search
